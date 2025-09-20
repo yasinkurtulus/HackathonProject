@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - WordMaster AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .welcome {
+            text-align: right;
+        }
+
+        .welcome h2 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .welcome p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .learning-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .word-display {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .word-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .word-definition {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .word-category {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .exercise-area {
+            margin-bottom: 30px;
+        }
+
+        .sentence {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .answer-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .answer-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .check-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .wrong-words {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .wrong-word-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wrong-word-item:last-child {
+            border-bottom: none;
+        }
+
+        .word-info h4 {
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .word-info p {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .attempts {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            display: none;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .answer-area {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>WordMaster AI</h1>
+            </div>
+            <div class="user-info">
+                <div class="welcome">
+                    <h2>Hoş geldin, {{ user.name or user.email }}!</h2>
+                    <p>Öğrenmeye devam edelim 🚀</p>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Çıkış
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-book-open"></i>
+                <div class="stat-number">{{ stats.words_learned or 0 }}</div>
+                <div class="stat-label">Öğrenilen Kelime</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-number">{{ stats.correct_answers or 0 }}</div>
+                <div class="stat-label">Doğru Cevap</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-fire"></i>
+                <div class="stat-number">{{ stats.current_streak or 0 }}</div>
+                <div class="stat-label">Seri</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-percentage"></i>
+                <div class="stat-number">{{ stats.accuracy or 0 }}%</div>
+                <div class="stat-label">Doğruluk Oranı</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="learning-section">
+                <h2 class="section-title">
+                    <i class="fas fa-graduation-cap"></i>
+                    Kelime Öğrenme
+                </h2>
+
+                <div class="loading" id="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Kelime yükleniyor...</p>
+                </div>
+
+                <div id="word-content" style="display: none;">
+                    <div class="word-display" id="word-display">
+                        <div class="word-text" id="word-text">Kelime</div>
+                        <div class="word-definition" id="word-definition">Tanım</div>
+                        <div class="word-category" id="word-category">Kategori</div>
+                    </div>
+
+                    <div class="exercise-area">
+                        <div class="sentence" id="sentence-text">Cümle yükleniyor...</div>
+                        
+                        <div class="answer-area">
+                            <input type="text" class="answer-input" id="answer-input" placeholder="Cevabınızı yazın...">
+                            <button class="check-btn" id="check-btn" onclick="checkAnswer()">Kontrol Et</button>
+                        </div>
+
+                        <div class="feedback" id="feedback"></div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="loadNewWord()">
+                            <i class="fas fa-refresh"></i> Yeni Kelime
+                        </button>
+                        <a href="/profile" class="btn btn-secondary">
+                            <i class="fas fa-user"></i> Profilim
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="sidebar-card">
+                    <h3 class="section-title">
+                        <i class="fas fa-times-circle"></i>
+                        Yanlış Kelimeler
+                    </h3>
+                    <div class="wrong-words" id="wrong-words">
+                        <p style="text-align: center; color: #666;">Henüz yanlış kelime yok</p>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="section-title">
+                        <i class="fas fa-heart"></i>
+                        İlgi Alanlarım
+                    </h3>
+                    <div id="user-interests">
+                        {% if user.interests %}
+                            {% for interest in user.interests %}
+                                <span style="background: #667eea; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; display: inline-block;">
+                                    {{ {
+                                        'technology': 'Teknoloji',
+                                        'business': 'İş',
+                                        'health': 'Sağlık',
+                                        'arts': 'Sanat',
+                                        'science': 'Bilim',
+                                        'travel': 'Seyahat',
+                                        'cooking': 'Yemek',
+                                        'sports': 'Spor',
+                                        'music': 'Müzik',
+                                        'education': 'Eğitim',
+                                        'photography': 'Fotoğraf',
+                                        'gaming': 'Oyun'
+                                    }[interest] }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <p style="text-align: center; color: #666;">İlgi alanı seçilmemiş</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentWord = null;
+
+        // Sayfa yüklendiğinde ilk kelimeyi getir
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNewWord();
+        });
+
+        async function loadNewWord() {
+            const loading = document.getElementById('loading');
+            const wordContent = document.getElementById('word-content');
+            
+            loading.style.display = 'block';
+            wordContent.style.display = 'none';
+            
+            try {
+                // Önce basit kelime listesinden dene
+                const response = await fetch('/api/word');
+                const result = await response.json();
+                
+                if (result.word) {
+                    currentWord = result;
+                    displayWord(currentWord);
+                    await generateSentence();
+                } else {
+                    // Fallback: sabit kelime
+                    currentWord = {
+                        word: "technology",
+                        definition: "the application of scientific knowledge for practical purposes",
+                        level: "intermediate",
+                        category: "general"
+                    };
+                    displayWord(currentWord);
+                    await generateSentence();
+                }
+                
+            } catch (error) {
+                console.error('Kelime yükleme hatası:', error);
+                // Sabit kelime ile devam et
+                currentWord = {
+                    word: "learning",
+                    definition: "the acquisition of knowledge or skills through experience, study, or teaching",
+                    level: "beginner",
+                    category: "education"
+                };
+                displayWord(currentWord);
+                await generateSentence();
+            } finally {
+                loading.style.display = 'none';
+                wordContent.style.display = 'block';
+            }
+        }
+
+        function displayWord(word) {
+            document.getElementById('word-text').textContent = word.word;
+            document.getElementById('word-definition').textContent = word.definition;
+            document.getElementById('word-category').textContent = word.category || word.level || 'Genel';
+            document.getElementById('answer-input').value = '';
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        async function generateSentence() {
+            if (!currentWord) return;
+            
+            try {
+                const response = await fetch('/api/generate-sentence', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: currentWord.word,
+                        definition: currentWord.definition
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.sentence) {
+                    document.getElementById('sentence-text').textContent = result.sentence;
+                    currentWord.sentence = result.sentence;
+                    currentWord.answer = result.answer;
+                } else {
+                    // Fallback cümle
+                    const fallbackSentence = `The word _____ means ${currentWord.definition}.`;
+                    document.getElementById('sentence-text').textContent = fallbackSentence;
+                    currentWord.sentence = fallbackSentence;
+                    currentWord.answer = currentWord.word;
+                }
+                
+            } catch (error) {
+                console.error('Cümle oluşturma hatası:', error);
+                // Fallback cümle
+                const fallbackSentence = `Complete this sentence: The word _____ is important in English learning.`;
+                document.getElementById('sentence-text').textContent = fallbackSentence;
+                currentWord.sentence = fallbackSentence;
+                currentWord.answer = currentWord.word;
+            }
+        }
+
+        async function checkAnswer() {
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            const feedback = document.getElementById('feedback');
+            
+            if (!userAnswer) {
+                alert('Lütfen bir cevap girin.');
+                return;
+            }
+            
+            if (!currentWord || !currentWord.answer) {
+                alert('Kelime bilgisi eksik.');
+                return;
+            }
+            
+            const isCorrect = userAnswer.toLowerCase() === currentWord.answer.toLowerCase();
+            
+            // Kullanıcı denemesini kaydet
+            try {
+                await fetch('/api/word/attempt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: currentWord.word,
+                        definition: currentWord.definition,
+                        category: currentWord.category || 'general',
+                        level: currentWord.level || 'mixed',
+                        is_correct: isCorrect
+                    })
+                });
+            } catch (error) {
+                console.error('Deneme kaydetme hatası:', error);
+            }
+            
+            // Geri bildirim göster
+            if (isCorrect) {
+                feedback.textContent = '🎉 Tebrikler! Doğru cevap!';
+                feedback.className = 'feedback correct';
+                
+                // İstatistikleri güncelle
+                updateStats(true);
+                
+                setTimeout(() => {
+                    loadNewWord();
+                }, 2000);
+            } else {
+                feedback.textContent = `❌ Yanlış. Doğru cevap: "${currentWord.answer}"`;
+                feedback.className = 'feedback incorrect';
+                
+                // İstatistikleri güncelle
+                updateStats(false);
+            }
+            
+            feedback.style.display = 'block';
+        }
+
+        // Enter tuşu ile cevap kontrolü
+        document.getElementById('answer-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // İstatistikleri güncelle
+        let currentStats = {
+            wordsLearned: {{ stats.words_learned or 0 }},
+            correctAnswers: {{ stats.correct_answers or 0 }},
+            currentStreak: {{ stats.current_streak or 0 }},
+            totalAttempts: {{ stats.total_attempts or 0 }}
+        };
+
+        function updateStats(isCorrect) {
+            if (isCorrect) {
+                currentStats.correctAnswers++;
+                currentStats.wordsLearned++;
+                currentStats.currentStreak++;
+            } else {
+                currentStats.currentStreak = 0;
+            }
+            currentStats.totalAttempts++;
+            
+            // UI'yi güncelle
+            document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = currentStats.wordsLearned;
+            document.querySelector('.stat-card:nth-child(2) .stat-number').textContent = currentStats.correctAnswers;
+            document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = currentStats.currentStreak;
+            
+            // Doğruluk oranını hesapla
+            const accuracy = currentStats.totalAttempts > 0 
+                ? Math.round((currentStats.correctAnswers / currentStats.totalAttempts) * 100) 
+                : 0;
+            document.querySelector('.stat-card:nth-child(4) .stat-number').textContent = accuracy + '%';
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Çıkış hatası:', error);
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>

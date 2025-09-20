@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordMaster AI - Personalized Learning</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: #667eea;
+        }
+
+        .logo h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .user-interests {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .interest-tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .word-info {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .word-text {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .word-definition {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .examples-container {
+            display: grid;
+            gap: 20px;
+        }
+
+        .example-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .example-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .tense-label {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .example-number {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .example-sentence {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .example-translation {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-spinner i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .loading-spinner p {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                padding: 25px;
+            }
+
+            .logo h1 {
+                font-size: 1.8rem;
+            }
+
+            .word-text {
+                font-size: 1.5rem;
+            }
+
+            .user-interests {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>WordMaster AI</h1>
+            </div>
+            <p class="subtitle">İlgi alanlarınıza göre kişiselleştirilmiş İngilizce cümleler oluşturun</p>
+            <div class="user-interests" id="user-interests">
+                <!-- User interests will be populated here -->
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Kelime ve Cümle Girişi
+                </h2>
+                
+                <div class="input-group">
+                    <label for="word-input">Öğrenmek istediğiniz kelime:</label>
+                    <input type="text" id="word-input" placeholder="Örn: technology, beautiful, understand..." autocomplete="off">
+                    </div>
+                
+                <div class="input-group">
+                    <label for="sentence-input">Bu kelimeyi içeren örnek cümle:</label>
+                    <textarea id="sentence-input" placeholder="Örn: Technology is advancing rapidly in our modern world."></textarea>
+                </div>
+                
+                <button id="generate-btn" class="generate-btn">
+                    <i class="fas fa-magic"></i>
+                    Kişiselleştirilmiş Cümleler Oluştur
+                </button>
+                
+                <div id="error-message" class="error-message"></div>
+                <div id="success-message" class="success-message"></div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Oluşturulan Örnekler
+                </h2>
+                
+                <div class="word-info" id="word-info">
+                    <div class="word-text" id="word-text" style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                        Kelime
+                        <button id="pronounce-btn" title="Seslendir" style="border:none; background:rgba(255,255,255,0.2); color:white; padding:6px 10px; border-radius:8px; cursor:pointer;">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                    </div>
+                    <div class="word-definition" id="word-definition">Tanım</div>
+                    </div>
+                
+                <div class="examples-container" id="examples-container">
+                    <!-- Generated examples will be displayed here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>AI ilgi alanlarınıza göre cümleler oluşturuyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PersonalizedWordLearning {
+            constructor() {
+                this.initializeElements();
+                this.bindEvents();
+                this.loadUserInterests();
+            }
+
+            initializeElements() {
+                this.wordInput = document.getElementById('word-input');
+                this.sentenceInput = document.getElementById('sentence-input');
+                this.generateBtn = document.getElementById('generate-btn');
+                this.resultsSection = document.getElementById('results-section');
+                this.wordInfo = document.getElementById('word-info');
+                this.wordText = document.getElementById('word-text');
+                this.wordDefinition = document.getElementById('word-definition');
+                this.examplesContainer = document.getElementById('examples-container');
+                this.loadingOverlay = document.getElementById('loading-overlay');
+                this.errorMessage = document.getElementById('error-message');
+                this.successMessage = document.getElementById('success-message');
+                this.userInterests = document.getElementById('user-interests');
+                this.pronounceBtn = document.getElementById('pronounce-btn');
+            }
+
+            bindEvents() {
+                this.generateBtn.addEventListener('click', () => this.generateSentences());
+                this.pronounceBtn.addEventListener('click', () => this.pronounceCurrent());
+                
+                // Enter key support
+                this.wordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sentenceInput.focus();
+                    }
+                });
+                
+                this.sentenceInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        this.generateSentences();
+                    }
+                });
+            }
+
+            async loadUserInterests() {
+                try {
+                    // Get user interests from the session data passed to the template
+                    const interestsJSON = '{{ user.interests | tojson if user.interests else "[]" }}';
+                    const interests = (() => { try { return JSON.parse(interestsJSON); } catch { return []; } })();
+                    
+                    if (interests && interests.length > 0) {
+                        const interestLabels = {
+                            'technology': 'Teknoloji',
+                            'business': 'İş & Finans',
+                            'health': 'Sağlık & Fitness',
+                            'arts': 'Sanat & Tasarım',
+                            'science': 'Bilim & Araştırma',
+                            'travel': 'Seyahat & Kültür',
+                            'cooking': 'Yemek & Mutfak',
+                            'sports': 'Spor & Aktivite',
+                            'music': 'Müzik & Enstrüman',
+                            'education': 'Eğitim & Öğretim',
+                            'photography': 'Fotoğrafçılık',
+                            'gaming': 'Oyun & Eğlence'
+                        };
+                        
+                        this.userInterests.innerHTML = interests.map(interest => 
+                            `<span class="interest-tag">${interestLabels[interest] || interest}</span>`
+                        ).join('');
+                    } else {
+                        this.userInterests.innerHTML = '<span class="interest-tag">İlgi alanı seçilmemiş</span>';
+                    }
+                } catch (error) {
+                    console.error('Error loading user interests:', error);
+                    this.userInterests.innerHTML = '<span class="interest-tag">İlgi alanı yüklenemedi</span>';
+                }
+            }
+
+            async generateSentences() {
+                const word = this.wordInput.value.trim();
+                const sampleSentence = this.sentenceInput.value.trim();
+
+                if (!word) {
+                    this.showError('Lütfen bir kelime girin.');
+                    return;
+                }
+
+                if (!sampleSentence) {
+                    this.showError('Lütfen örnek bir cümle girin.');
+                    return;
+                }
+
+                this.showLoading();
+                this.hideMessages();
+
+                try {
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            word: word,
+                            sample_sentence: sampleSentence
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.info && result.examples) {
+                        this.displayResults(result.info, result.examples, word);
+                        this.showSuccess('Cümleler başarıyla oluşturuldu!');
+                    } else {
+                        this.showError('Cümleler oluşturulurken bir hata oluştu.');
+                    }
+
+                } catch (error) {
+                    console.error('Error generating sentences:', error);
+                    this.showError('Bağlantı hatası. Lütfen tekrar deneyin.');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            displayResults(info, examples, word) {
+                // Display word (prefer lemma/root form)
+                const shownWord = (info && info.lemma) ? info.lemma : word;
+                this.wordText.textContent = shownWord;
+
+                // Display word type
+                if (info.type) {
+                    const typeLabels = {
+                        'noun': 'İsim',
+                        'verb': 'Fiil', 
+                        'adj': 'Sıfat',
+                        'adv': 'Zarf',
+                        'other': 'Diğer'
+                    };
+                    const typeLabel = typeLabels[info.type] || info.type;
+                    this.wordText.innerHTML = `${shownWord} <span style=\"font-size: 0.7em; background: rgba(255,255,255,0.3); padding: 4px 8px; border-radius: 10px; margin-left: 10px;\">${typeLabel}</span>`;
+                    // Seslendirme butonunu yeniden ekle
+                    const btn = document.createElement('button');
+                    btn.id = 'pronounce-btn';
+                    btn.title = 'Seslendir';
+                    btn.style.border = 'none';
+                    btn.style.background = 'rgba(255,255,255,0.2)';
+                    btn.style.color = 'white';
+                    btn.style.padding = '6px 10px';
+                    btn.style.borderRadius = '8px';
+                    btn.style.cursor = 'pointer';
+                    btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    this.wordText.appendChild(btn);
+                    // Buton olayını tekrar bağla
+                    btn.addEventListener('click', () => this.pronounceText(shownWord));
+                }
+                
+                // Display both English and Turkish definitions
+                let definitionText = '';
+                if (info.eng) {
+                    definitionText = info.eng;
+                }
+                if (info.tur) {
+                    definitionText += (info.eng ? '<br><br>' : '') + '<div style="color: #ffeb3b; font-weight: 500; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; border-left: 3px solid #ffeb3b;">🇹🇷 ' + info.tur + '</div>';
+                }
+                if (!definitionText) {
+                    definitionText = 'Tanım bulunamadı';
+                }
+                
+                this.wordDefinition.innerHTML = definitionText;
+
+                // Display examples
+                this.examplesContainer.innerHTML = '';
+                
+                examples.forEach((example, index) => {
+                    const exampleCard = document.createElement('div');
+                    exampleCard.className = 'example-card';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'example-header';
+                    
+                    if (example.tense) {
+                        // Verb examples with tenses
+                        header.innerHTML = `
+                            <span class="tense-label">${example.tense}</span>
+                        `;
+                    } else {
+                        // Other word types with example numbers
+                        header.innerHTML = `
+                            <span class="example-number">Örnek ${example.example || index + 1}</span>
+                        `;
+                    }
+                    
+                    const sentence = document.createElement('div');
+                    sentence.className = 'example-sentence';
+                    sentence.textContent = example.sentence;
+                    
+                    const translation = document.createElement('div');
+                    translation.className = 'example-translation';
+                    translation.textContent = example.turkish || '';
+                    
+                    exampleCard.appendChild(header);
+                    exampleCard.appendChild(sentence);
+                    if (example.turkish) {
+                        exampleCard.appendChild(translation);
+                    }
+                    
+                    this.examplesContainer.appendChild(exampleCard);
+                });
+
+                this.resultsSection.style.display = 'block';
+                this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            async pronounceCurrent() {
+                const text = this.wordText.textContent?.trim();
+                if (!text) return;
+                this.pronounceText(text);
+            }
+
+            async pronounceText(text) {
+                try {
+                    const res = await fetch('/api/pronounce', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+
+                    if (!res.ok) {
+                        this.showError('Ses oluşturulamadı.');
+                        return;
+                    }
+
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.play();
+                } catch (e) {
+                    console.error('Pronounce error', e);
+                    this.showError('Ses oynatılırken hata oluştu.');
+                }
+            }
+
+            showLoading() {
+                this.loadingOverlay.style.display = 'flex';
+                this.generateBtn.disabled = true;
+            }
+
+            hideLoading() {
+                this.loadingOverlay.style.display = 'none';
+                this.generateBtn.disabled = false;
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                this.successMessage.style.display = 'none';
+            }
+
+            showSuccess(message) {
+                this.successMessage.textContent = message;
+                this.successMessage.style.display = 'block';
+                this.errorMessage.style.display = 'none';
+            }
+
+            hideMessages() {
+                this.errorMessage.style.display = 'none';
+                this.successMessage.style.display = 'none';
+            }
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PersonalizedWordLearning();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+Flask==2.3.3
+google-generativeai==0.3.2
+python-dotenv==1.0.0
+Werkzeug==2.3.7
+nltk>=3.9
+transformers>=4.44
+torch>=2.3
+sentencepiece>=0.2
+accelerate>=0.34
+huggingface_hub>=0.24
+soundfile>=0.12.1     # WAV yazmak için
+numpy>=1.26           # ses tensorünü işlemek için
+sounddevice>=0.4.6
+ipython>=8.0
