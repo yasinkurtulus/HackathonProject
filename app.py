@@ -1,12 +1,15 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import render_template, request, jsonify, session, redirect, url_for
 from database import Database
 import secrets
 import generator
 import sound
+from flask import Flask
+from dotenv import load_dotenv
+import email_service
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)  # Session için güvenli key
-
+load_dotenv()
 # Veritabanı bağlantısı
 db = Database()
 
@@ -28,7 +31,7 @@ HOBBY_CATEGORIES = {
     "gaming": "Oyun & Eğlence"
 }
 
-
+app.config
 @app.route('/')
 def index():
     if 'user_id' not in session:
@@ -37,6 +40,34 @@ def index():
     user_stats = db.get_user_stats(session['user_id'])
     return render_template('index.html', user=session.get('user'), stats=user_stats)
 
+@app.route('/words')
+def words_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    # query parametreleri
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 50))
+    q = request.args.get('q', '')
+
+    offset = (page - 1) * per_page
+
+    # list_user_words(user_id, limit, offset, search)
+    words = db.list_user_words(
+        session['user_id'],
+        limit=per_page,
+        offset=offset,
+        search=q if q else None
+    )
+
+    return render_template(
+        'words.html',
+        user=session.get('user'),
+        words=words,
+        page=page,
+        per_page=per_page,
+        q=q
+    )
 
 @app.route('/dashboard')
 def dashboard():
@@ -118,6 +149,10 @@ def api_generate():
         print(f"Starting generation for word: {word}, interests: {interests}")
         info, examples = generator.generate_sentences(word, sample_sentence, tenses, interests)
         print(f"Generation successful - info: {info}, examples count: {len(examples) if examples else 0}")
+        normalized_word = word.casefold()
+        db_result=db.add_word_entry(user_id=session["user_id"], word=normalized_word)
+        if db_result:
+            print("Kelime sözlüğe kaydedildi")
         return jsonify({"info": info, "examples": examples})
     except Exception as e:
         print(f"Error generating sentences: {e}")
@@ -125,6 +160,32 @@ def api_generate():
         traceback.print_exc()
         return jsonify({"success": False, "error": f"Cümleler oluşturulurken bir hata oluştu: {str(e)}"})
 
+@app.get("/cron/run-reminders")
+def run_reminders_now():
+    # due kayıtlarını tüm kullanıcılar için çek
+    due = db.get_due_reminders(limit=200)
+    sent = 0
+
+    mailer=email_service.EmailService()
+
+    print(f"{len(due)} adet hatırlatma bulundu.")
+
+    for r in due:
+        to = r["email"]
+        subject = f"Hatırlatma: {r['word']}"
+        body = f"Bugün hatırlaman gereken kelime: {r['word']}"
+
+        try:
+            mailer.send_email(to_email=to, subject=subject, body=body)
+            sent += 1
+
+            # Gönderim sonrası interval ve next_run_at güncelle
+            db.after_reminder_sent(r["rule_id"], r["interval_days"])
+
+        except Exception as e:
+            print(f"{to} için mail hatası:", e)
+
+    return jsonify({"due": len(due), "sent": sent})
 
 @app.route('/api/generate-sentence', methods=['POST'])
 def generate_sentence():

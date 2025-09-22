@@ -314,6 +314,29 @@
                 justify-content: center;
             }
         }
+
+        /* >>> Eklenen: Kenardaki "Kelimelerim" butonu */
+        .floating-words-btn{
+          position: fixed;
+          right: 24px;          /* sola almak istersen: left:24px; right'ı sil */
+          bottom: 24px;
+          z-index: 1000;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: #fff;
+          padding: 12px 18px;
+          border-radius: 999px;
+          font-weight: 600;
+          text-decoration: none;
+          box-shadow: 0 8px 24px rgba(0,0,0,.2);
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .floating-words-btn:hover{
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(0,0,0,.25);
+        }
     </style>
 </head>
 <body>
@@ -338,22 +361,22 @@
                     <i class="fas fa-edit"></i>
                     Kelime ve Cümle Girişi
                 </h2>
-                
+
                 <div class="input-group">
                     <label for="word-input">Öğrenmek istediğiniz kelime:</label>
                     <input type="text" id="word-input" placeholder="Örn: technology, beautiful, understand..." autocomplete="off">
                     </div>
-                
+
                 <div class="input-group">
                     <label for="sentence-input">Bu kelimeyi içeren örnek cümle:</label>
                     <textarea id="sentence-input" placeholder="Örn: Technology is advancing rapidly in our modern world."></textarea>
                 </div>
-                
+
                 <button id="generate-btn" class="generate-btn">
                     <i class="fas fa-magic"></i>
                     Kişiselleştirilmiş Cümleler Oluştur
                 </button>
-                
+
                 <div id="error-message" class="error-message"></div>
                 <div id="success-message" class="success-message"></div>
             </section>
@@ -364,7 +387,7 @@
                     <i class="fas fa-lightbulb"></i>
                     Oluşturulan Örnekler
                 </h2>
-                
+
                 <div class="word-info" id="word-info">
                     <div class="word-text" id="word-text" style="display:flex; align-items:center; gap:10px; justify-content:center;">
                         Kelime
@@ -374,7 +397,7 @@
                     </div>
                     <div class="word-definition" id="word-definition">Tanım</div>
                     </div>
-                
+
                 <div class="examples-container" id="examples-container">
                     <!-- Generated examples will be displayed here -->
                 </div>
@@ -389,6 +412,11 @@
             </div>
         </div>
     </div>
+
+    <!-- >>> Eklenen: Kenardaki "Kelimelerim" butonu -->
+    <a class="floating-words-btn" href="{{ url_for('words_page') }}">
+      <i class="fas fa-list"></i> Kelimelerim
+    </a>
 
     <script>
         class PersonalizedWordLearning {
@@ -417,14 +445,14 @@
             bindEvents() {
                 this.generateBtn.addEventListener('click', () => this.generateSentences());
                 this.pronounceBtn.addEventListener('click', () => this.pronounceCurrent());
-                
+
                 // Enter key support
                 this.wordInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         this.sentenceInput.focus();
                     }
                 });
-                
+
                 this.sentenceInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter' && e.ctrlKey) {
                         this.generateSentences();
@@ -437,7 +465,7 @@
                     // Get user interests from the session data passed to the template
                     const interestsJSON = '{{ user.interests | tojson if user.interests else "[]" }}';
                     const interests = (() => { try { return JSON.parse(interestsJSON); } catch { return []; } })();
-                    
+
                     if (interests && interests.length > 0) {
                         const interestLabels = {
                             'technology': 'Teknoloji',
@@ -453,8 +481,8 @@
                             'photography': 'Fotoğrafçılık',
                             'gaming': 'Oyun & Eğlence'
                         };
-                        
-                        this.userInterests.innerHTML = interests.map(interest => 
+
+                        this.userInterests.innerHTML = interests.map(interest =>
                             `<span class="interest-tag">${interestLabels[interest] || interest}</span>`
                         ).join('');
                     } else {
@@ -513,22 +541,19 @@
             }
 
             displayResults(info, examples, word) {
-                // Display word (prefer lemma/root form)
                 const shownWord = (info && info.lemma) ? info.lemma : word;
                 this.wordText.textContent = shownWord;
 
-                // Display word type
                 if (info.type) {
                     const typeLabels = {
                         'noun': 'İsim',
-                        'verb': 'Fiil', 
+                        'verb': 'Fiil',
                         'adj': 'Sıfat',
                         'adv': 'Zarf',
                         'other': 'Diğer'
                     };
                     const typeLabel = typeLabels[info.type] || info.type;
                     this.wordText.innerHTML = `${shownWord} <span style=\"font-size: 0.7em; background: rgba(255,255,255,0.3); padding: 4px 8px; border-radius: 10px; margin-left: 10px;\">${typeLabel}</span>`;
-                    // Seslendirme butonunu yeniden ekle
                     const btn = document.createElement('button');
                     btn.id = 'pronounce-btn';
                     btn.title = 'Seslendir';
@@ -540,11 +565,9 @@
                     btn.style.cursor = 'pointer';
                     btn.innerHTML = '<i class="fas fa-volume-up"></i>';
                     this.wordText.appendChild(btn);
-                    // Buton olayını tekrar bağla
                     btn.addEventListener('click', () => this.pronounceText(shownWord));
                 }
-                
-                // Display both English and Turkish definitions
+
                 let definitionText = '';
                 if (info.eng) {
                     definitionText = info.eng;
@@ -555,45 +578,42 @@
                 if (!definitionText) {
                     definitionText = 'Tanım bulunamadı';
                 }
-                
+
                 this.wordDefinition.innerHTML = definitionText;
 
-                // Display examples
                 this.examplesContainer.innerHTML = '';
-                
+
                 examples.forEach((example, index) => {
                     const exampleCard = document.createElement('div');
                     exampleCard.className = 'example-card';
-                    
+
                     const header = document.createElement('div');
                     header.className = 'example-header';
-                    
+
                     if (example.tense) {
-                        // Verb examples with tenses
                         header.innerHTML = `
                             <span class="tense-label">${example.tense}</span>
                         `;
                     } else {
-                        // Other word types with example numbers
                         header.innerHTML = `
                             <span class="example-number">Örnek ${example.example || index + 1}</span>
                         `;
                     }
-                    
+
                     const sentence = document.createElement('div');
                     sentence.className = 'example-sentence';
                     sentence.textContent = example.sentence;
-                    
+
                     const translation = document.createElement('div');
                     translation.className = 'example-translation';
                     translation.textContent = example.turkish || '';
-                    
+
                     exampleCard.appendChild(header);
                     exampleCard.appendChild(sentence);
                     if (example.turkish) {
                         exampleCard.appendChild(translation);
                     }
-                    
+
                     this.examplesContainer.appendChild(exampleCard);
                 });
 
@@ -658,7 +678,6 @@
             }
         }
 
-        // Initialize the app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new PersonalizedWordLearning();
         });

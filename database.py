@@ -2,80 +2,116 @@ import sqlite3
 import hashlib
 import json
 from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 class Database:
     def __init__(self, db_path='wordmaster.db'):
         self.db_path = db_path
         self.init_database()
-    
+
     def init_database(self):
-        """Veritabanını ve tabloları oluşturur"""
+        """Veritabanını ve tabloları (SQLite uyumlu) oluşturur"""
         conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA foreign_keys = ON")  # FK'ler için şart (her connection'da)
         cursor = conn.cursor()
-        
-        # Kullanıcılar tablosu
-        cursor.execute('''
+
+
+        # users
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 name TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP,
-                interests TEXT,  -- JSON formatında hobiler
+                interests TEXT,                  -- JSON text
                 level_preference TEXT DEFAULT 'mixed',
                 total_words_learned INTEGER DEFAULT 0,
                 total_correct_answers INTEGER DEFAULT 0,
                 current_streak INTEGER DEFAULT 0
-            )
-        ''')
-        
-        # Kullanıcı kelime geçmişi tablosu
-        cursor.execute('''
+            );
+        """)
+
+        # user_words (mevcut yapın korunuyor)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_words (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
+                user_id INTEGER NOT NULL,
                 word TEXT NOT NULL,
                 definition TEXT,
                 category TEXT,
                 level TEXT,
-                is_correct BOOLEAN,
+                is_correct INTEGER,              -- SQLite'ta boolean yok; 0/1 kullanıyoruz
                 attempts INTEGER DEFAULT 1,
-                first_attempt_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_attempt_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
-        ''')
-        
-        # Hobi bazlı kelime listeleri
-        cursor.execute('''
+                first_attempt_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_attempt_date  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        """)
+
+        # hobby_words
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS hobby_words (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 hobby TEXT NOT NULL,
                 word TEXT NOT NULL,
                 definition TEXT,
                 level TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Kullanıcı oturumları
-        cursor.execute('''
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # user_sessions
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
+                user_id INTEGER NOT NULL,
                 session_token TEXT UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 expires_at TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users (id)
-            )
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        """)
+
+        # word_entries  (ÖNEMLİ: NOW() yerine CURRENT_TIMESTAMP, FK öncesi virgül!)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS word_entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                word TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user_id, word COLLATE NOCASE)  -- aynı kullanıcı için aynı kelimeyi engelle
+            );
+        """)
+
+        # reminder_rules  (end_at YOK, BOOLEAN yerine INTEGER, sabit virgüller)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reminder_rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                entry_id INTEGER NOT NULL,
+                interval_days INTEGER NOT NULL,              -- 0 => tek seferlik
+                start_at TIMESTAMP NOT NULL,                 -- CURRENT_TIMESTAMP ile set edeceğiz
+                is_active INTEGER NOT NULL DEFAULT 1,        -- 1/0
+                next_run_at TIMESTAMP NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (entry_id) REFERENCES word_entries(id) ON DELETE CASCADE
+            );
+        """)
+
+        # (Önerilir) Aynı kullanıcı aynı kelimeyi iki kez ekleyemesin (case-insensitive)
+        cursor.execute('''
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_word_entries_user_word_nocase
+            ON word_entries(user_id, word COLLATE NOCASE)
         ''')
-        
+
         conn.commit()
         conn.close()
-        print(" Veritabanı başarıyla oluşturuldu")
-    
+        print("Veritabanı başarıyla oluşturuldu")
+
     def hash_password(self, password):
         """Şifreyi hashler"""
         return hashlib.sha256(password.encode()).hexdigest()
@@ -155,7 +191,158 @@ class Database:
         conn.commit()
         conn.close()
         return {"success": True}
-    
+
+    def add_word_entry(self, user_id: int, word: str):
+        """
+        1) Aynı kullanıcı için aynı kelime varsa eklemez (NOCASE).
+        2) Yoksa word_entries'e ekler.
+        3) Başarılı eklemeden sonra reminder_rules'ta kural açar:
+           - 10 saniye sonra 1 kez mail (interval_days = 0)
+        """
+        import sqlite3
+        conn = sqlite3.connect(self.db_path)
+        try:
+            conn.execute("PRAGMA foreign_keys = ON")
+            cur = conn.cursor()
+
+            # 1) Duplicate kontrolü (Apple == apple)
+            cur.execute("""
+                SELECT id FROM word_entries
+                WHERE user_id = ? AND word = ? COLLATE NOCASE
+                LIMIT 1
+            """, (user_id, word.strip()))
+            row = cur.fetchone()
+            if row:
+                return {"success": False, "error": "Bu kelime daha önce eklenmiş.", "entry_id": row[0]}
+
+            # 2) Kelimeyi ekle
+            cur.execute("""
+                INSERT INTO word_entries (user_id, word, created_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            """, (user_id, word.strip()))
+            entry_id = cur.lastrowid
+
+            # İstatistik güncelle (opsiyonel)
+            cur.execute("""
+                UPDATE users SET total_words_learned = total_words_learned + 1
+                WHERE id = ?
+            """, (user_id,))
+
+            conn.commit()  # kelimeyi kesinleştir
+        except Exception as e:
+            conn.close()
+            return {"success": False, "error": str(e)}
+
+        # 3) Reminder kuralını AYNı DB için ayrı bir transaction’da oluştur
+        rule_res = self.create_reminder_rule_for_entry(
+            user_id=user_id,
+            entry_id=entry_id,
+            delay_seconds=10,  # 10 sn sonra ilk (ve tek) mail
+            interval_days=1  # 0 => tek seferlik
+        )
+        if not rule_res.get("success"):
+            # Kelime eklendi ama kural açılamadı; loglamak yeterli.
+            print("Reminder rule creation failed:", rule_res.get("error"))
+
+        return {"success": True, "entry_id": entry_id}
+
+    def _dt(dt: datetime) -> str:
+        # SQLite için 'YYYY-MM-DD HH:MM:SS'
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    def create_reminder_rule_for_entry(self, user_id: int, entry_id: int,
+                                       interval_days: int = 1):  # varsayılan 1 gün
+        conn = sqlite3.connect(self.db_path)
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+              INSERT INTO reminder_rules
+                (user_id, entry_id, interval_days, start_at, is_active, next_run_at)
+              VALUES
+                (?, ?, ?, CURRENT_TIMESTAMP, 1,
+                 datetime(CURRENT_TIMESTAMP, '+' || ? || ' days'))
+            """, (user_id, entry_id, interval_days, interval_days))
+            conn.commit()
+            return {"success": True, "rule_id": cur.lastrowid}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+        finally:
+            conn.close()
+
+    def _next_interval_days(current_days: int | None) -> int:
+        ladder = [1, 2, 4, 7, 15, 30, 60, 120]  # tavan: 120
+        if not current_days or current_days < ladder[0]:
+            return ladder[0]
+        for v in ladder:
+            if v > current_days:
+                return v
+        return ladder[-1]  # zaten tavanda ise tavanda kal
+
+    def after_reminder_sent(self, rule_id: int, current_interval: int | None):
+        new_interval = self._next_interval_days(current_interval)
+        with sqlite3.connect(self.db_path) as conn:
+            cur = conn.cursor()
+            # (Opsiyonel: yarış koşullarına karşı WHERE'e due kontrolü ekledim)
+            cur.execute("""
+                UPDATE reminder_rules
+                SET interval_days = ?,
+                    next_due_at   = datetime(CURRENT_TIMESTAMP, '+' || ? || ' days')
+                WHERE id = ?
+                  AND next_due_at <= CURRENT_TIMESTAMP
+            """, (new_interval, new_interval, rule_id))
+            conn.commit()
+
+    def get_due_reminders(self, limit=100):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT
+              rr.id           AS rule_id,
+              rr.user_id,
+              rr.interval_days,
+              u.email         AS email,
+              w.word          AS word
+            FROM reminder_rules rr
+            JOIN users  u ON u.id = rr.user_id
+            JOIN words  w ON w.id = rr.word_id
+            WHERE rr.active = 1
+              AND rr.next_due_at <= CURRENT_TIMESTAMP
+            ORDER BY rr.next_due_at ASC
+            LIMIT ?
+        """, (limit,))
+        rows = cur.fetchall()
+        conn.close()
+        return rows
+
+    def list_user_words(self, user_id: int, limit: int = 100, offset: int = 0, search: str | None = None):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        if search:
+            cur.execute(
+                """SELECT id, word, created_at
+                   FROM word_entries
+                   WHERE user_id = ? AND word LIKE ?
+                   ORDER BY created_at DESC
+                   LIMIT ? OFFSET ?""",
+                (user_id, f"%{search}%", limit, offset)
+            )
+        else:
+            cur.execute(
+                """SELECT id, word, created_at
+                   FROM word_entries
+                   WHERE user_id = ?
+                   ORDER BY created_at DESC
+                   LIMIT ? OFFSET ?""",
+                (user_id, limit, offset)
+            )
+
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return rows
+
     def save_word_attempt(self, user_id, word, definition, category, level, is_correct):
         """Kullanıcının kelime denemesini kaydeder"""
         conn = sqlite3.connect(self.db_path)
@@ -304,3 +491,6 @@ class Database:
             }
             for word in words
         ]
+
+
+

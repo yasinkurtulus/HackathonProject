@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>Kelimelerim</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --g1:#667eea; --g2:#764ba2;
+      --glass-bg: rgba(255,255,255,.92);
+      --muted:#6b7280;
+      --ring:rgba(102,126,234,.12);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      min-height:100vh;
+      background: linear-gradient(135deg,var(--g1),var(--g2));
+      padding:24px;
+    }
+    .container{max-width:1100px;margin:0 auto}
+
+    /* Header */
+    .header{
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border-radius:20px;
+      padding:24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+      margin-bottom:24px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .brand i{ font-size:28px; color:var(--g1) }
+    .brand h1{
+      background: linear-gradient(135deg,var(--g1),var(--g2));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      font-size:22px; font-weight:800;
+    }
+    .back-btn{
+      text-decoration:none; color:white; background:linear-gradient(135deg,var(--g1),var(--g2));
+      padding:10px 14px; border-radius:12px; font-weight:600;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);
+    }
+
+    /* Toolbar */
+    .toolbar{
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      padding:16px;
+      margin-bottom:20px;
+      display:flex; gap:12px; flex-wrap:wrap;
+      align-items:center;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+    }
+    .search{
+      position:relative; flex:1 1 280px;
+    }
+    .search input{
+      width:100%; padding:12px 42px 12px 40px;
+      border:2px solid #e5e7eb; border-radius:12px; outline:none; font-size:15px;
+      transition:.2s;
+      background:white;
+    }
+    .search input:focus{ border-color:#a5b4fc; box-shadow:0 0 0 6px var(--ring) }
+    .search i{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#9ca3af }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:999px;
+      background:#f3f4f6; color:#374151; font-weight:600; text-decoration:none;
+    }
+    .chip i{ color:#6d28d9 }
+
+    /* Grid */
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+    .card{
+      background: var(--glass-bg);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 10px 26px rgba(0,0,0,.08);
+      display:flex; flex-direction:column; gap:10px;
+      border:1px solid rgba(255,255,255,.4);
+    }
+    .word{
+      font-size:22px; font-weight:800; color:#111827;
+      display:flex; align-items:center; gap:8px;
+    }
+    .badge{
+      font-size:12px; font-weight:700; letter-spacing:.3px;
+      background:linear-gradient(135deg,var(--g1),var(--g2)); color:white;
+      padding:4px 10px; border-radius:999px;
+    }
+    .meta{ color:var(--muted); font-size:12px }
+    .row{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .actions{ display:flex; gap:8px; }
+    .btn{
+      border:none; cursor:pointer; padding:8px 12px; border-radius:10px;
+      font-weight:700; display:inline-flex; align-items:center; gap:8px;
+      background:#eef2ff; color:#4338ca;
+      transition:.15s;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(67,56,202,.18) }
+    .btn-outline{
+      background:#fff; border:1px solid #e5e7eb; color:#374151;
+    }
+
+    /* Empty state */
+    .empty{
+      text-align:center; color:#111827; background:var(--glass-bg);
+      padding:40px; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.06);
+    }
+    .empty p{ color:var(--muted); margin-top:6px }
+    .empty a{ color:white; text-decoration:none; background:linear-gradient(135deg,var(--g1),var(--g2)); padding:10px 14px; border-radius:12px; font-weight:700; display:inline-block; margin-top:14px }
+
+    /* Pagination (basit) */
+    .pagination{ margin-top:18px; display:flex; justify-content:center; gap:10px }
+    .pg-btn{
+      text-decoration:none; padding:8px 12px; border-radius:10px; font-weight:700;
+      background:#fff; border:1px solid #e5e7eb; color:#374151;
+    }
+    .pg-btn[disabled]{ opacity:.5; pointer-events:none }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <i class="fa-solid fa-list-ul"></i>
+        <h1>Kelimelerim</h1>
+      </div>
+      <a class="back-btn" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-left"></i> Geri</a>
+    </div>
+
+    <!-- Toolbar -->
+    <form class="toolbar" method="get" action="{{ url_for('words_page') }}">
+      <div class="search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input name="q" value="{{ q }}" placeholder="Kelime ara..." />
+      </div>
+      <button class="chip" type="submit"><i class="fa-solid fa-filter"></i> Ara</button>
+      <a class="chip" href="{{ url_for('words_page') }}"><i class="fa-solid fa-xmark"></i> Temizle</a>
+    </form>
+
+    {% if words and words|length > 0 %}
+      <!-- Grid -->
+      <div class="grid">
+        {% for w in words %}
+        <div class="card">
+          <div class="row">
+            <div class="word">
+              {{ w.word }}
+              <span class="badge">LEARNED</span>
+            </div>
+          </div>
+          <div class="meta">
+            <i class="fa-regular fa-clock"></i>
+            {{ w.created_at }}
+          </div>
+          <div class="actions">
+            <!-- İleride sil/detay vs. eklersin -->
+            <button class="btn" onclick="speak('{{ w.word|escape }}')"><i class="fa-solid fa-volume-high"></i> Seslendir</button>
+            <!-- <button class="btn btn-outline">Detay</button> -->
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Basit pagination (opsiyonel: app.py'da page/per_page var) -->
+      <div class="pagination">
+        <a class="pg-btn" href="{{ url_for('words_page', page=(page-1), per_page=per_page, q=q) }}" {% if page<=1 %}disabled{% endif %}>Önceki</a>
+        <a class="pg-btn" href="{{ url_for('words_page', page=(page + 1), per_page=per_page, q=q) }}">Sonraki</a>
+      </div>
+    {% else %}
+      <div class="empty">
+        <i class="fa-regular fa-face-smile-beam" style="font-size:40px; color:#7c3aed;"></i>
+        <h2 style="margin-top:10px;">Henüz kelime eklenmemiş</h2>
+        <p>İlk kelimeni eklemek için ana sayfaya dön ve bir kelime üret.</p>
+        <a href="{{ url_for('index') }}"><i class="fa-solid fa-wand-magic-sparkles"></i> Kelime oluştur</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Basit TTS: mevcut /api/pronounce endpoint’ini kullanır
+    async function speak(text){
+      try{
+        const res = await fetch('/api/pronounce',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({text})
+        });
+        if(!res.ok) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+      }catch(e){ console.error(e); }
+    }
+  </script>
+</body>
+</html>
