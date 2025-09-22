@@ -82,10 +82,17 @@ class Database:
                 user_id INTEGER NOT NULL,
                 word TEXT NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                next_reminder_at TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE(user_id, word COLLATE NOCASE)  -- aynı kullanıcı için aynı kelimeyi engelle
             );
         """)
+
+        # Defensive migration: add next_reminder_at if missing
+        cursor.execute("PRAGMA table_info(word_entries)")
+        cols = [r[1] for r in cursor.fetchall()]
+        if 'next_reminder_at' not in cols:
+            cursor.execute("ALTER TABLE word_entries ADD COLUMN next_reminder_at TIMESTAMP")
 
         # reminder_rules  (end_at YOK, BOOLEAN yerine INTEGER, sabit virgüller)
         cursor.execute("""
@@ -217,9 +224,9 @@ class Database:
 
             # 2) Kelimeyi ekle
             cur.execute("""
-                INSERT INTO word_entries (user_id, word, created_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-            """, (user_id, word.strip()))
+                INSERT INTO word_entries (user_id, word, created_at, next_reminder_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP, datetime(CURRENT_TIMESTAMP, '+' || ? || ' days'))
+            """, (user_id, word.strip(), 1))
             entry_id = cur.lastrowid
 
             # İstatistik güncelle (opsiyonel)
@@ -237,7 +244,6 @@ class Database:
         rule_res = self.create_reminder_rule_for_entry(
             user_id=user_id,
             entry_id=entry_id,
-            delay_seconds=10,  # 10 sn sonra ilk (ve tek) mail
             interval_days=1  # 0 => tek seferlik
         )
         if not rule_res.get("success"):
@@ -282,14 +288,27 @@ class Database:
         new_interval = self._next_interval_days(current_interval)
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.cursor()
-            # (Opsiyonel: yarış koşullarına karşı WHERE'e due kontrolü ekledim)
+            # Find entry_id for updating word_entries as well
+            cur.execute("SELECT entry_id FROM reminder_rules WHERE id = ?", (rule_id,))
+            row = cur.fetchone()
+            entry_id = row[0] if row else None
+
+            # Update next_run_at and interval on the rule
             cur.execute("""
                 UPDATE reminder_rules
                 SET interval_days = ?,
-                    next_due_at   = datetime(CURRENT_TIMESTAMP, '+' || ? || ' days')
+                    next_run_at   = datetime(CURRENT_TIMESTAMP, '+' || ? || ' days')
                 WHERE id = ?
-                  AND next_due_at <= CURRENT_TIMESTAMP
+                  AND next_run_at <= CURRENT_TIMESTAMP
             """, (new_interval, new_interval, rule_id))
+
+            # Mirror the next reminder to word_entries for convenience
+            if entry_id is not None:
+                cur.execute("""
+                    UPDATE word_entries
+                    SET next_reminder_at = datetime(CURRENT_TIMESTAMP, '+' || ? || ' days')
+                    WHERE id = ?
+                """, (new_interval, entry_id))
             conn.commit()
 
     def get_due_reminders(self, limit=100):
@@ -302,18 +321,20 @@ class Database:
               rr.user_id,
               rr.interval_days,
               u.email         AS email,
-              w.word          AS word
+              we.word         AS word
             FROM reminder_rules rr
-            JOIN users  u ON u.id = rr.user_id
-            JOIN words  w ON w.id = rr.word_id
-            WHERE rr.active = 1
-              AND rr.next_due_at <= CURRENT_TIMESTAMP
-            ORDER BY rr.next_due_at ASC
+            JOIN users       u  ON u.id = rr.user_id
+            JOIN word_entries we ON we.id = rr.entry_id
+            WHERE rr.is_active = 1
+              AND rr.next_run_at <= CURRENT_TIMESTAMP
+            ORDER BY rr.next_run_at ASC
             LIMIT ?
         """, (limit,))
         rows = cur.fetchall()
         conn.close()
         return rows
+
+    # Manual updates for reminder time are intentionally not supported; schedule is automatic.
 
     def list_user_words(self, user_id: int, limit: int = 100, offset: int = 0, search: str | None = None):
         conn = sqlite3.connect(self.db_path)
@@ -322,7 +343,7 @@ class Database:
 
         if search:
             cur.execute(
-                """SELECT id, word, created_at
+                """SELECT id, word, created_at, next_reminder_at
                    FROM word_entries
                    WHERE user_id = ? AND word LIKE ?
                    ORDER BY created_at DESC
@@ -331,7 +352,7 @@ class Database:
             )
         else:
             cur.execute(
-                """SELECT id, word, created_at
+                """SELECT id, word, created_at, next_reminder_at
                    FROM word_entries
                    WHERE user_id = ?
                    ORDER BY created_at DESC

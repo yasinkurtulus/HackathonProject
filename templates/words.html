@@ -171,6 +171,12 @@
             <i class="fa-regular fa-clock"></i>
             {{ w.created_at }}
           </div>
+          <div class="meta">
+            <i class="fa-regular fa-bell"></i>
+            Hatırlatma: 
+            <span id="next-reminder-{{ w.id }}" style="font-weight:600; margin-left:4px;">{{ w.next_reminder_at or '—' }}</span>
+          </div>
+          
           <div class="actions">
             <!-- İleride sil/detay vs. eklersin -->
             <button class="btn" onclick="speak('{{ w.word|escape }}')"><i class="fa-solid fa-volume-high"></i> Seslendir</button>
@@ -210,6 +216,8 @@
         audio.play();
       }catch(e){ console.error(e); }
     }
+
+    // Reminder times are automated by the system; no client-side editing.
   </script>
 </body>
 </html>

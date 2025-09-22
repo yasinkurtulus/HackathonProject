@@ -7,11 +7,13 @@ import os
 
 class EmailService:
     def __init__(self):
-        # Email account credentials - should be moved to environment variables
-        self.sender_email = "wordmasterai@gmail.com"
-        self.password = "ffco qqxl kwyo rfsb"
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
+        # Prefer environment variables; fall back to previous defaults if missing
+        # Note: For Gmail, use an App Password when 2FA is enabled
+        self.sender_email = os.getenv("SMTP_USERNAME", "wordmasterai@gmail.com")
+        self.password = os.getenv("SMTP_PASSWORD", "ffco qqxl kwyo rfsb")
+        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        # Cast port to int if provided, default 587
+        self.smtp_port = int(os.getenv("SMTP_PORT", 587))
 
     def send_email(self, to_email, subject, body, is_html=False):
         """Send email to specified recipient"""

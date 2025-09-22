@@ -242,6 +242,13 @@ def api_register():
     result = db.create_user(email, password, name)
 
     if result["success"]:
+        # Send welcome email asynchronously-light (no await needed) and ignore failures
+        try:
+            mailer = email_service.EmailService()
+            mailer.send_welcome_email(user_email=email, user_name=name or "User")
+        except Exception as _e:
+            # Do not block registration flow on email errors
+            pass
         return jsonify({"success": True, "message": "Hesap başarıyla oluşturuldu"})
     else:
         return jsonify(result)
@@ -310,6 +317,8 @@ def api_get_hobby_words(hobby):
 
     return jsonify({"success": True, "words": words})
 
+
+## Kullanıcı hatırlatmaları sistem tarafından otomatik güncellenir; manuel API kaldırıldı.
 
 @app.route('/api/word/attempt', methods=['POST'])
 def api_save_word_attempt():

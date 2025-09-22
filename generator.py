@@ -21,7 +21,8 @@ def construct_word(text,sentence):
       print(f"Checking if '{text}' is English word...")
       if not(is_english_word(text)):
           print(f"{text} is not an english word")
-          return text.lower(), "noun"  # fallback
+          # Fail fast: do not proceed with generation or saving
+          raise ValueError("Given word has no valid English meaning")
       else:
         print(f"Analyzing word '{text}' in sentence...")
         word_features=analyzer.analyze_word_in_sentence(text,sentence)
